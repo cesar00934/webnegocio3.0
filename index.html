@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inventario y Escáner</title>
+    <style>
+      /* Estilos generales */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        background: #f4f4f4;
+      }
+      .header {
+        background: #333;
+        color: #fff;
+        padding: 15px;
+        text-align: center;
+      }
+      .container {
+        padding: 20px;
+      }
+      .section {
+        background: #fff;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+      }
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .table th,
+      .table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      .btn {
+        display: inline-block;
+        padding: 10px 15px;
+        background: #333;
+        color: #fff;
+        text-decoration: none;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        margin-right: 5px;
+      }
+      .btn:hover {
+        background: #555;
+      }
+      #scanner-container {
+        text-align: center;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Inventario y Escáner</h1>
+    </div>
+    <div class="container">
+      <!-- Sección para registrar productos -->
+      <div class="section" id="product-registration">
+        <h2>Registrar Producto</h2>
+        <form id="productForm">
+          <div class="form-group">
+            <label for="barcode">Código de Barras</label>
+            <input type="text" id="barcode" name="barcode" required />
+          </div>
+          <div class="form-group">
+            <label for="name">Nombre del Producto</label>
+            <input type="text" id="name" name="name" required />
+          </div>
+          <div class="form-group">
+            <label for="description">Descripción</label>
+            <textarea id="description" name="description"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="price">Precio</label>
+            <input type="number" id="price" name="price" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label for="stock">Stock</label>
+            <input type="number" id="stock" name="stock" required />
+          </div>
+          <button type="submit" class="btn">Guardar Producto</button>
+        </form>
+      </div>
+
+      <!-- Sección para escanear códigos de barras -->
+      <div class="section" id="barcode-scanner">
+        <h2>Escanear Código de Barras</h2>
+        <div id="scanner-container"></div>
+        <button id="startScanner" class="btn">Iniciar Escáner</button>
+        <button id="stopScanner" class="btn" style="display: none">
+          Detener Escáner
+        </button>
+        <p id="scanner-result"></p>
+      </div>
+
+      <!-- Sección para mostrar el inventario -->
+      <div class="section" id="inventory">
+        <h2>Inventario de Productos</h2>
+        <table class="table" id="inventoryTable">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Precio</th>
+              <th>Stock</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Se llenará dinámicamente con los productos -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Librería de QuaggaJS para el escaneo de códigos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <!-- Librerías de Firebase (usamos versiones compat para mantener la sintaxis familiar) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+    <script>
+      // Configuración de Firebase (nota: se cambió storageBucket al formato correcto)
+      const firebaseConfig = {
+        apiKey: "AIzaSyAdy7GvoSPfT5P7FikSQVbLCOnv5BJ48Ao",
+        authDomain: "negocioweb-ee5e4.firebaseapp.com",
+        projectId: "negocioweb-ee5e4",
+        storageBucket: "negocioweb-ee5e4.appspot.com", // Se ajustó al formato usual
+        messagingSenderId: "663776668365",
+        appId: "1:663776668365:web:58509117a5a576cce39784",
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      // Función para actualizar la tabla de inventario desde Firestore
+      function updateInventoryTable() {
+        db.collection("products")
+          .get()
+          .then((snapshot) => {
+            const tbody = document
+              .getElementById("inventoryTable")
+              .querySelector("tbody");
+            tbody.innerHTML = "";
+            snapshot.forEach((doc) => {
+              const product = doc.data();
+              product.id = doc.id;
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+            <td>${product.barcode}</td>
+            <td>${product.name}</td>
+            <td>${product.description}</td>
+            <td>${product.price.toFixed(2)}</td>
+            <td>${product.stock}</td>
+            <td>
+              <button class="btn" onclick="editProduct('${
+                product.id
+              }')">Editar</button>
+              <button class="btn" onclick="deleteProduct('${
+                product.id
+              }')">Eliminar</button>
+            </td>
+          `;
+              tbody.appendChild(tr);
+            });
+          })
+          .catch((err) => console.error("Error al obtener productos:", err));
+      }
+
+      // Cargar el inventario al iniciar la página
+      updateInventoryTable();
+
+      // Manejo del formulario para agregar un producto
+      document
+        .getElementById("productForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const product = {
+            barcode: document.getElementById("barcode").value,
+            name: document.getElementById("name").value,
+            description: document.getElementById("description").value,
+            price: parseFloat(document.getElementById("price").value),
+            stock: parseInt(document.getElementById("stock").value),
+          };
+          db.collection("products")
+            .add(product)
+            .then((docRef) => {
+              alert("Producto guardado!");
+              document.getElementById("productForm").reset();
+              updateInventoryTable();
+            })
+            .catch((error) => {
+              console.error("Error al guardar producto:", error);
+            });
+        });
+
+      // Función para editar un producto (edita solo el nombre en este ejemplo)
+      function editProduct(id) {
+        const newName = prompt("Nuevo nombre del producto:");
+        if (newName && newName.trim() !== "") {
+          db.collection("products")
+            .doc(id)
+            .update({ name: newName })
+            .then(() => updateInventoryTable())
+            .catch((err) =>
+              console.error("Error al actualizar producto:", err)
+            );
+        }
+      }
+
+      // Función para eliminar un producto
+      function deleteProduct(id) {
+        if (confirm("¿Estás seguro de eliminar este producto?")) {
+          db.collection("products")
+            .doc(id)
+            .delete()
+            .then(() => updateInventoryTable())
+            .catch((err) => console.error("Error al eliminar producto:", err));
+        }
+      }
+
+      // Escaneo de códigos de barras con QuaggaJS
+      let scannerActive = false;
+      document.getElementById("startScanner").addEventListener("click", () => {
+        if (scannerActive) return;
+        scannerActive = true;
+        document.getElementById("startScanner").style.display = "none";
+        document.getElementById("stopScanner").style.display = "inline-block";
+
+        Quagga.init(
+          {
+            inputStream: {
+              name: "Live",
+              type: "LiveStream",
+              target: document.querySelector("#scanner-container"),
+              constraints: {
+                // Si usas PC, prueba "user" en lugar de "environment"
+                facingMode: "environment",
+              },
+            },
+            decoder: {
+              readers: [
+                "code_128_reader",
+                "ean_reader",
+                "ean_8_reader",
+                "code_39_reader",
+                "code_39_vin_reader",
+              ],
+            },
+          },
+          function (err) {
+            if (err) {
+              console.error(err);
+              alert("Error al iniciar el escáner.");
+              return;
+            }
+            Quagga.start();
+          }
+        );
+
+        Quagga.onDetected((data) => {
+          const code = data.codeResult.code;
+          document.getElementById("scanner-result").textContent =
+            "Código detectado: " + code;
+          // Completa el campo del formulario con el código escaneado
+          document.getElementById("barcode").value = code;
+          stopScanner();
+        });
+      });
+
+      document
+        .getElementById("stopScanner")
+        .addEventListener("click", stopScanner);
+
+      function stopScanner() {
+        if (scannerActive) {
+          Quagga.stop();
+          scannerActive = false;
+          document.getElementById("startScanner").style.display =
+            "inline-block";
+          document.getElementById("stopScanner").style.display = "none";
+        }
+      }
+    </script>
+  </body>
+</html>
