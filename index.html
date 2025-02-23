@@ -3,81 +3,145 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Inventario y Escáner</title>
+    <title>Negocio: Inventario, Ventas y Escáner</title>
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap"
+      rel="stylesheet"
+    />
     <style>
       /* Estilos generales */
+      * {
+        box-sizing: border-box;
+      }
       body {
-        font-family: Arial, sans-serif;
+        font-family: "Roboto", sans-serif;
         margin: 0;
-        background: #f4f4f4;
+        background: #f0f2f5;
+        color: #333;
       }
       .header {
-        background: #333;
+        background: linear-gradient(135deg, #4e73df, #224abe);
         color: #fff;
-        padding: 15px;
+        padding: 20px;
         text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 1.8em;
       }
       .container {
-        padding: 20px;
+        width: 90%;
+        max-width: 1200px;
+        margin: 20px auto;
+      }
+      /* Notificaciones */
+      #notification {
+        display: none;
+        margin-bottom: 10px;
+        padding: 10px;
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+        border-radius: 4px;
       }
       .section {
         background: #fff;
         padding: 20px;
         margin-bottom: 20px;
-        border-radius: 5px;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+      .section h2 {
+        margin-top: 0;
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 5px;
+        color: #224abe;
       }
       .form-group {
         margin-bottom: 15px;
       }
       .form-group label {
         display: block;
-        margin-bottom: 5px;
+        margin-bottom: 6px;
+        font-weight: 500;
       }
       .form-group input,
       .form-group textarea {
         width: 100%;
-        padding: 8px;
-        box-sizing: border-box;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1em;
       }
       .table {
         width: 100%;
         border-collapse: collapse;
+        margin-top: 10px;
       }
       .table th,
       .table td {
         border: 1px solid #ddd;
-        padding: 8px;
+        padding: 10px;
         text-align: left;
+      }
+      .table th {
+        background: #f7f7f7;
       }
       .btn {
         display: inline-block;
         padding: 10px 15px;
-        background: #333;
+        background: #224abe;
         color: #fff;
         text-decoration: none;
         border: none;
-        border-radius: 3px;
+        border-radius: 4px;
         cursor: pointer;
         margin-right: 5px;
+        margin-top: 5px;
+        transition: background 0.3s;
+        font-size: 0.95em;
       }
       .btn:hover {
-        background: #555;
+        background: #1a38a0;
       }
       #scanner-container {
         text-align: center;
         margin-bottom: 10px;
       }
+      p {
+        margin: 0.5em 0;
+      }
+      /* Resumen de Ventas */
+      #sales-summary {
+        text-align: center;
+      }
+      #summaryTabs {
+        margin-bottom: 15px;
+      }
+      #summaryTabs .tabButton {
+        margin: 0 5px;
+      }
+      #summaryBox {
+        background: #e2e8f0;
+        padding: 15px;
+        border-radius: 6px;
+        text-align: center;
+      }
     </style>
   </head>
   <body>
     <div class="header">
-      <h1>Inventario y Escáner</h1>
+      <h1>Negocio: Inventario, Ventas y Escáner</h1>
     </div>
     <div class="container">
-      <!-- Sección para registrar productos -->
+      <!-- Área de notificación -->
+      <div id="notification"></div>
+
+      <!-- Sección: Registro y Edición de Producto -->
       <div class="section" id="product-registration">
-        <h2>Registrar Producto</h2>
+        <h2>Registrar / Editar Producto</h2>
         <form id="productForm">
           <div class="form-group">
             <label for="barcode">Código de Barras</label>
@@ -89,21 +153,33 @@
           </div>
           <div class="form-group">
             <label for="description">Descripción</label>
-            <textarea id="description" name="description"></textarea>
+            <textarea id="description" name="description" rows="3"></textarea>
           </div>
           <div class="form-group">
-            <label for="price">Precio</label>
+            <label for="price">Precio de Venta</label>
             <input type="number" id="price" name="price" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label for="cost">Costo del Producto</label>
+            <input type="number" id="cost" name="cost" step="0.01" required />
           </div>
           <div class="form-group">
             <label for="stock">Stock</label>
             <input type="number" id="stock" name="stock" required />
           </div>
           <button type="submit" class="btn">Guardar Producto</button>
+          <button
+            type="button"
+            id="cancelEdit"
+            class="btn"
+            style="display: none"
+          >
+            Cancelar Edición
+          </button>
         </form>
       </div>
 
-      <!-- Sección para escanear códigos de barras -->
+      <!-- Sección: Escáner de Código de Barras -->
       <div class="section" id="barcode-scanner">
         <h2>Escanear Código de Barras</h2>
         <div id="scanner-container"></div>
@@ -114,7 +190,7 @@
         <p id="scanner-result"></p>
       </div>
 
-      <!-- Sección para mostrar el inventario -->
+      <!-- Sección: Inventario de Productos -->
       <div class="section" id="inventory">
         <h2>Inventario de Productos</h2>
         <table class="table" id="inventoryTable">
@@ -124,37 +200,76 @@
               <th>Nombre</th>
               <th>Descripción</th>
               <th>Precio</th>
+              <th>Costo</th>
               <th>Stock</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <!-- Se llenará dinámicamente con los productos -->
+            <!-- Se llenará dinámicamente -->
           </tbody>
         </table>
       </div>
+
+      <!-- Sección: Resumen de Ventas -->
+      <div class="section" id="sales-summary">
+        <h2>Resumen de Ventas</h2>
+        <div id="summaryTabs">
+          <button class="tabButton btn" data-period="daily">Diario</button>
+          <button class="tabButton btn" data-period="weekly">Semanal</button>
+          <button class="tabButton btn" data-period="monthly">Mensual</button>
+          <button class="tabButton btn" data-period="annual">Anual</button>
+        </div>
+        <div id="summaryBox">
+          <p>
+            <strong>Ingresos:</strong> $<span id="summaryIngresos">0.00</span>
+          </p>
+          <p>
+            <strong>Egresos:</strong> $<span id="summaryEgresos">0.00</span>
+          </p>
+          <p>
+            <strong>Ganancia:</strong> $<span id="summaryGanancia">0.00</span>
+          </p>
+        </div>
+        <button id="refreshSummary" class="btn" style="margin-top: 10px">
+          Actualizar Resumen
+        </button>
+      </div>
     </div>
 
-    <!-- Librería de QuaggaJS para el escaneo de códigos -->
+    <!-- Librería de QuaggaJS para el escaneo -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-    <!-- Librerías de Firebase (usamos versiones compat para mantener la sintaxis familiar) -->
+    <!-- Firebase (compat para usar firebase.initializeApp y firestore) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
     <script>
-      // Configuración de Firebase (nota: se cambió storageBucket al formato correcto)
+      // Configuración de Firebase (verifica storageBucket en la consola)
       const firebaseConfig = {
         apiKey: "AIzaSyAdy7GvoSPfT5P7FikSQVbLCOnv5BJ48Ao",
         authDomain: "negocioweb-ee5e4.firebaseapp.com",
         projectId: "negocioweb-ee5e4",
-        storageBucket: "negocioweb-ee5e4.appspot.com", // Se ajustó al formato usual
+        storageBucket: "negocioweb-ee5e4.appspot.com",
         messagingSenderId: "663776668365",
         appId: "1:663776668365:web:58509117a5a576cce39784",
       };
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
 
-      // Función para actualizar la tabla de inventario desde Firestore
+      // Función para mostrar notificaciones temporales
+      function showNotification(message) {
+        const notif = document.getElementById("notification");
+        notif.textContent = message;
+        notif.style.display = "block";
+        setTimeout(() => {
+          notif.style.display = "none";
+        }, 3000);
+      }
+
+      // -------------------
+      // PRODUCTOS
+      // -------------------
+      let editingProductId = null;
       function updateInventoryTable() {
         db.collection("products")
           .get()
@@ -171,15 +286,21 @@
             <td>${product.barcode}</td>
             <td>${product.name}</td>
             <td>${product.description}</td>
-            <td>${product.price.toFixed(2)}</td>
+            <td>$${parseFloat(product.price).toFixed(2)}</td>
+            <td>$${parseFloat(product.cost).toFixed(2)}</td>
             <td>${product.stock}</td>
             <td>
-              <button class="btn" onclick="editProduct('${
+              <button class="btn" onclick="loadProductForEdit('${
                 product.id
               }')">Editar</button>
               <button class="btn" onclick="deleteProduct('${
                 product.id
               }')">Eliminar</button>
+              <button class="btn" onclick="sellProduct('${product.id}', ${
+                product.stock
+              }, '${product.name}', ${product.price}, ${
+                product.cost
+              })">Vender</button>
             </td>
           `;
               tbody.appendChild(tr);
@@ -188,10 +309,37 @@
           .catch((err) => console.error("Error al obtener productos:", err));
       }
 
-      // Cargar el inventario al iniciar la página
-      updateInventoryTable();
+      function loadProductForEdit(id) {
+        db.collection("products")
+          .doc(id)
+          .get()
+          .then((doc) => {
+            if (doc.exists) {
+              const product = doc.data();
+              editingProductId = id;
+              document.getElementById("barcode").value = product.barcode;
+              document.getElementById("name").value = product.name;
+              document.getElementById("description").value =
+                product.description;
+              document.getElementById("price").value = product.price;
+              document.getElementById("cost").value = product.cost;
+              document.getElementById("stock").value = product.stock;
+              document.getElementById("cancelEdit").style.display =
+                "inline-block";
+              showNotification("Producto cargado para edición");
+            }
+          })
+          .catch((err) => console.error("Error al cargar producto:", err));
+      }
 
-      // Manejo del formulario para agregar un producto
+      document
+        .getElementById("cancelEdit")
+        .addEventListener("click", function () {
+          editingProductId = null;
+          document.getElementById("productForm").reset();
+          this.style.display = "none";
+        });
+
       document
         .getElementById("productForm")
         .addEventListener("submit", function (e) {
@@ -201,35 +349,35 @@
             name: document.getElementById("name").value,
             description: document.getElementById("description").value,
             price: parseFloat(document.getElementById("price").value),
+            cost: parseFloat(document.getElementById("cost").value),
             stock: parseInt(document.getElementById("stock").value),
           };
-          db.collection("products")
-            .add(product)
-            .then((docRef) => {
-              alert("Producto guardado!");
-              document.getElementById("productForm").reset();
-              updateInventoryTable();
-            })
-            .catch((error) => {
-              console.error("Error al guardar producto:", error);
-            });
+          if (editingProductId) {
+            db.collection("products")
+              .doc(editingProductId)
+              .update(product)
+              .then(() => {
+                showNotification("Producto actualizado");
+                editingProductId = null;
+                document.getElementById("cancelEdit").style.display = "none";
+                document.getElementById("productForm").reset();
+                updateInventoryTable();
+              })
+              .catch((err) =>
+                console.error("Error al actualizar producto:", err)
+              );
+          } else {
+            db.collection("products")
+              .add(product)
+              .then(() => {
+                showNotification("Producto guardado");
+                document.getElementById("productForm").reset();
+                updateInventoryTable();
+              })
+              .catch((err) => console.error("Error al guardar producto:", err));
+          }
         });
 
-      // Función para editar un producto (edita solo el nombre en este ejemplo)
-      function editProduct(id) {
-        const newName = prompt("Nuevo nombre del producto:");
-        if (newName && newName.trim() !== "") {
-          db.collection("products")
-            .doc(id)
-            .update({ name: newName })
-            .then(() => updateInventoryTable())
-            .catch((err) =>
-              console.error("Error al actualizar producto:", err)
-            );
-        }
-      }
-
-      // Función para eliminar un producto
       function deleteProduct(id) {
         if (confirm("¿Estás seguro de eliminar este producto?")) {
           db.collection("products")
@@ -240,24 +388,158 @@
         }
       }
 
-      // Escaneo de códigos de barras con QuaggaJS
+      function sellProduct(
+        id,
+        currentStock,
+        productName,
+        defaultPrice,
+        productCost
+      ) {
+        const quantity = parseInt(prompt("Cantidad a vender:"));
+        if (isNaN(quantity) || quantity <= 0) {
+          showNotification("Cantidad inválida");
+          return;
+        }
+        if (quantity > currentStock) {
+          showNotification("No hay suficiente stock");
+          return;
+        }
+        let newPriceInput = prompt(
+          `Precio de venta actual: $${defaultPrice.toFixed(
+            2
+          )}\nIngrese nuevo precio (deje vacío para usar el precio actual):`
+        );
+        let salePrice = defaultPrice;
+        if (newPriceInput !== null && newPriceInput.trim() !== "") {
+          let tempPrice = parseFloat(newPriceInput);
+          if (isNaN(tempPrice) || tempPrice <= 0) {
+            showNotification(
+              "Precio inválido. Se usará el precio por defecto."
+            );
+          } else {
+            salePrice = tempPrice;
+          }
+        }
+        const newStock = currentStock - quantity;
+        db.collection("products")
+          .doc(id)
+          .update({ stock: newStock })
+          .then(() => {
+            const saleRecord = {
+              productId: id,
+              productName: productName,
+              quantity: quantity,
+              salePrice: salePrice,
+              productCost: productCost,
+              totalSale: salePrice * quantity,
+              totalCost: productCost * quantity,
+              date: new Date(),
+            };
+            db.collection("sales")
+              .add(saleRecord)
+              .then(() => {
+                showNotification("Venta registrada");
+                updateInventoryTable();
+                updateSummaryForPeriod(currentPeriod);
+              })
+              .catch((err) => console.error("Error al registrar venta:", err));
+          })
+          .catch((err) => console.error("Error al actualizar stock:", err));
+      }
+
+      // -------------------
+      // RESUMEN DE VENTAS
+      // -------------------
+      // Global para período actual (por defecto: diario)
+      let currentPeriod = "daily";
+
+      function updateSummaryForPeriod(period) {
+        db.collection("sales")
+          .get()
+          .then((snapshot) => {
+            let ingresos = 0,
+              egresos = 0;
+            const now = new Date();
+            let startDate;
+            switch (period) {
+              case "daily":
+                startDate = new Date(
+                  now.getFullYear(),
+                  now.getMonth(),
+                  now.getDate()
+                );
+                break;
+              case "weekly":
+                startDate = new Date(now);
+                startDate.setDate(now.getDate() - now.getDay());
+                startDate.setHours(0, 0, 0, 0);
+                break;
+              case "monthly":
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                break;
+              case "annual":
+                startDate = new Date(now.getFullYear(), 0, 1);
+                break;
+            }
+            snapshot.forEach((doc) => {
+              const sale = doc.data();
+              const saleDate = new Date(sale.date.seconds * 1000);
+              if (saleDate >= startDate && saleDate <= now) {
+                ingresos += sale.totalSale;
+                egresos += sale.totalCost;
+              }
+            });
+            const ganancia = ingresos - egresos;
+            document.getElementById("summaryIngresos").textContent =
+              ingresos.toFixed(2);
+            document.getElementById("summaryEgresos").textContent =
+              egresos.toFixed(2);
+            document.getElementById("summaryGanancia").textContent =
+              ganancia.toFixed(2);
+          })
+          .catch((err) =>
+            console.error("Error al obtener resumen de ventas:", err)
+          );
+      }
+
+      // Agregar event listeners a los botones de pestaña
+      document.querySelectorAll(".tabButton").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          currentPeriod = this.getAttribute("data-period");
+          // Opcional: Resaltar el botón activo
+          document
+            .querySelectorAll(".tabButton")
+            .forEach((b) => (b.style.background = "#224abe"));
+          this.style.background = "#1a38a0";
+          updateSummaryForPeriod(currentPeriod);
+        });
+      });
+
+      document
+        .getElementById("refreshSummary")
+        .addEventListener("click", function () {
+          updateSummaryForPeriod(currentPeriod);
+        });
+
+      // Inicializar resumen en período por defecto
+      updateSummaryForPeriod(currentPeriod);
+
+      // -------------------
+      // ESCÁNER CON QUAGGAJS
+      // -------------------
       let scannerActive = false;
       document.getElementById("startScanner").addEventListener("click", () => {
         if (scannerActive) return;
         scannerActive = true;
         document.getElementById("startScanner").style.display = "none";
         document.getElementById("stopScanner").style.display = "inline-block";
-
         Quagga.init(
           {
             inputStream: {
               name: "Live",
               type: "LiveStream",
               target: document.querySelector("#scanner-container"),
-              constraints: {
-                // Si usas PC, prueba "user" en lugar de "environment"
-                facingMode: "environment",
-              },
+              constraints: { facingMode: "environment" },
             },
             decoder: {
               readers: [
@@ -272,27 +554,49 @@
           function (err) {
             if (err) {
               console.error(err);
-              alert("Error al iniciar el escáner.");
+              showNotification("Error al iniciar el escáner");
               return;
             }
             Quagga.start();
           }
         );
-
         Quagga.onDetected((data) => {
           const code = data.codeResult.code;
           document.getElementById("scanner-result").textContent =
             "Código detectado: " + code;
-          // Completa el campo del formulario con el código escaneado
-          document.getElementById("barcode").value = code;
-          stopScanner();
+          db.collection("products")
+            .where("barcode", "==", code)
+            .get()
+            .then((snapshot) => {
+              if (!snapshot.empty) {
+                const doc = snapshot.docs[0];
+                const product = doc.data();
+                editingProductId = doc.id;
+                document.getElementById("barcode").value = product.barcode;
+                document.getElementById("name").value = product.name;
+                document.getElementById("description").value =
+                  product.description;
+                document.getElementById("price").value = product.price;
+                document.getElementById("cost").value = product.cost;
+                document.getElementById("stock").value = product.stock;
+                document.getElementById("cancelEdit").style.display =
+                  "inline-block";
+                showNotification("Producto ya existe, cargado para edición.");
+              } else {
+                document.getElementById("barcode").value = code;
+              }
+              stopScanner();
+            })
+            .catch((err) => {
+              console.error("Error al verificar el código:", err);
+              stopScanner();
+            });
         });
       });
 
       document
         .getElementById("stopScanner")
         .addEventListener("click", stopScanner);
-
       function stopScanner() {
         if (scannerActive) {
           Quagga.stop();
@@ -302,6 +606,9 @@
           document.getElementById("stopScanner").style.display = "none";
         }
       }
+
+      // Inicializar tablas al cargar la página
+      updateInventoryTable();
     </script>
   </body>
 </html>
